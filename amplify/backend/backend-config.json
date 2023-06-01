@@ -1,1 +1,8 @@
-{}
+{
+  "custom": {
+    "rdsLambdaProxy": {
+      "providerPlugin": "awscloudformation",
+      "service": "customCDK"
+    }
+  }
+}

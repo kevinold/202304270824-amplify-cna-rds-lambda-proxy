@@ -10,6 +10,11 @@
       "StackName": "amplify-202304270824amplifyc-dev-82511",
       "StackId": "arn:aws:cloudformation:us-east-2:074128318641:stack/amplify-202304270824amplifyc-dev-82511/f1b7e3e0-e4fe-11ed-b26b-0642abf9eddb",
       "AmplifyAppId": "d63e0dchsa0wp"
+    },
+    "categories": {
+      "custom": {
+        "rdsLambdaProxy": {}
+      }
     }
   }
 }
