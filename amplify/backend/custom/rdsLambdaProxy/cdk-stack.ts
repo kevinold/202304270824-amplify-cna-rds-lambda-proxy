@@ -1,13 +1,16 @@
 import * as AmplifyHelpers from '@aws-amplify/cli-extensibility-helper';
 import * as cdk from 'aws-cdk-lib';
-//import { AmplifyDependentResourcesAttributes } from '../../types/amplify-dependent-resources-ref';
 import { Construct } from 'constructs';
+import { AmplifyDependentResourcesAttributes } from '../../types/amplify-dependent-resources-ref';
 //import * as iam from 'aws-cdk-lib/aws-iam';
 //import * as sns from 'aws-cdk-lib/aws-sns';
 //import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
 //import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 import { Duration, RemovalPolicy, aws_ec2 as ec2, aws_rds as rds, aws_secretsmanager as secretsmanager } from 'aws-cdk-lib';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import path from 'path';
 // import * as apigw from '@aws-cdk/aws-apigatewayv2-alpha';
 // import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 
@@ -74,9 +77,14 @@ export class cdkStack extends cdk.Stack {
     );
     */
 
-
-
-
+    // Access other Amplify Resources 
+    const dependencies:AmplifyDependentResourcesAttributes = AmplifyHelpers.addResourceDependency(this, 
+      amplifyResourceProps.category, 
+      amplifyResourceProps.resourceName, 
+      [
+        {category: "function", resourceName: "populateLambda"},
+      ]
+    );
 
     const vpc = new cdk.aws_ec2.Vpc(this, "RdsProxyExampleVpc", {
       subnetConfiguration: [
@@ -134,7 +142,6 @@ export class cdkStack extends cdk.Stack {
       },
       clusterIdentifier: 'RDSProxyExampleCluster',
       engine: cdk.aws_rds.DatabaseClusterEngine.auroraPostgres({
-        //version: cdk.aws_rds.AuroraPostgresEngineVersion.VER_11_9
         version: cdk.aws_rds.AuroraPostgresEngineVersion.VER_14_6
       }),
       instances: 1,
@@ -144,59 +151,71 @@ export class cdkStack extends cdk.Stack {
       defaultDatabaseName: dbName,
     });
 
-    // const rdsProxy = postgreSql.addProxy('rdsProxyExample', {
-    //   secrets: [ rdsSecret ],
-    //   securityGroups: [ rdsProxySecurityGroup ],
-    //   debugLogging: true,
-    //   iamAuth: true,
-    //   vpc
-    // });
+    const rdsProxy = postgreSql.addProxy('rdsProxyExample', {
+      secrets: [ rdsSecret ],
+      securityGroups: [ rdsProxySecurityGroup ],
+      debugLogging: true,
+      iamAuth: true,
+      vpc
+    });
 
-    // const rdsProxyPopulateLambda: NodejsFunction = new NodejsFunction(this, id+'-populateLambda', {
-    //   memorySize: 1024,
-    //   timeout: Duration.seconds(5),
-    //   runtime: lambda.Runtime.NODEJS_14_X,
-    //   handler: 'handler',
-    //   entry: path.join(__dirname, '../lambda/populate.ts'),
-    //   vpc: vpc,
-    //   vpcSubnets: { subnetType: cdk.aws_ec2.SubnetType.PRIVATE_ISOLATED },
-    //   securityGroups: [ lambdaSecurityGroup ],
-    //   environment: {
-    //     PGHOST: rdsProxy.endpoint,
-    //     PGDATABASE: dbName,
-    //     PGUSER: dbUsername
-    //   },
-    //   // Bundler removes these dependencies since they aren't imported explicitly
-    //   // Include them so sequelize can connect to Postgres
-    //   bundling: {
-    //     nodeModules: [ 'pg', 'pg-hstore' ]
-    //   }
-    // });
 
-    // const rdsProxyGetDataLambda: NodejsFunction = new NodejsFunction(this, id+'-getDataLambda', {
-    //   memorySize: 1024,
-    //   timeout: Duration.seconds(5),
-    //   runtime: lambda.Runtime.NODEJS_14_X,
-    //   handler: 'handler',
-    //   entry: path.join(__dirname, '../lambda/getData.ts'),
-    //   vpc: vpc,
-    //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
-    //   securityGroups: [ lambdaSecurityGroup ],
-    //   environment: {
-    //     PGHOST: rdsProxy.endpoint,
-    //     PGDATABASE: dbName,
-    //     PGUSER: dbUsername
-    //   },
-    //   // Bundler removes these dependencies since they aren't imported explicitly
-    //   // Include them so sequelize can connect to Postgres
-    //   bundling: {
-    //     nodeModules: [ 'pg', 'pg-hstore' ]
-    //   }
-    // });
+    const rdsProxyPopulateLambda: NodejsFunction = new NodejsFunction(this, id+'-populateLambda', {
+      memorySize: 1024,
+      timeout: Duration.seconds(5),
+      runtime: lambda.Runtime.NODEJS_16_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../lambda/populate.ts'),
+      vpc: vpc,
+      vpcSubnets: { subnetType: cdk.aws_ec2.SubnetType.PRIVATE_ISOLATED },
+      securityGroups: [ lambdaSecurityGroup ],
+      environment: {
+        PGHOST: rdsProxy.endpoint,
+        PGDATABASE: dbName,
+        PGUSER: dbUsername
+      },
+      // Bundler removes these dependencies since they aren't imported explicitly
+      // Include them so sequelize can connect to Postgres
+      bundling: {
+        nodeModules: [ 'pg', 'pg-hstore' ]
+      }
+    });
 
-    // rdsProxy.grantConnect(rdsProxyPopulateLambda, dbUsername);
-    // rdsProxy.grantConnect(rdsProxyGetDataLambda, dbUsername);
+    const rdsProxyGetDataLambda: NodejsFunction = new NodejsFunction(this, id+'-getDataLambda', {
+      memorySize: 1024,
+      timeout: Duration.seconds(5),
+      runtime: lambda.Runtime.NODEJS_16_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../lambda/getData.ts'),
+      vpc: vpc,
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      securityGroups: [ lambdaSecurityGroup ],
+      environment: {
+        PGHOST: rdsProxy.endpoint,
+        PGDATABASE: dbName,
+        PGUSER: dbUsername
+      },
+      // Bundler removes these dependencies since they aren't imported explicitly
+      // Include them so sequelize can connect to Postgres
+      bundling: {
+        nodeModules: [ 'pg', 'pg-hstore' ]
+      }
+    });
 
+    const populateFnUrl = rdsProxyPopulateLambda.addFunctionUrl()
+    const getFnUrl = rdsProxyGetDataLambda.addFunctionUrl()
+
+    rdsProxy.grantConnect(rdsProxyPopulateLambda, dbUsername);
+    rdsProxy.grantConnect(rdsProxyGetDataLambda, dbUsername);
+
+    new cdk.CfnOutput(this, 'populateEndpointUrl', {
+      value: populateFnUrl.url,
+      exportName: 'populateEndpointUrl'
+    });
+    new cdk.CfnOutput(this, 'populateEndpointUrl', {
+      value: getFnUrl.url,
+      exportName: 'getEndpointUrl'
+    });
     // const httpApi: apigw.HttpApi = new apigw.HttpApi(this, 'HttpApi');
 
     // const populateLambdaIntegration = new HttpLambdaIntegration('rdsProxyPopulateLambda', rdsProxyPopulateLambda );

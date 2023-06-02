@@ -1,8 +1,28 @@
 {
   "custom": {
     "rdsLambdaProxy": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "Name",
+            "Arn",
+            "Region",
+            "LambdaExecutionRole",
+            "LambdaExecutionRoleArn"
+          ],
+          "category": "function",
+          "resourceName": "populateLambda"
+        }
+      ],
       "providerPlugin": "awscloudformation",
       "service": "customCDK"
+    }
+  },
+  "function": {
+    "populateLambda": {
+      "build": true,
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   }
 }
