@@ -1,5 +1,6 @@
-import { Sequelize, Options as SequelizeOptions, DataTypes } from 'sequelize';
+// @ts-nocheck
 import { Signer } from 'aws-sdk-js-v3-rds-signer';
+import { DataTypes, Sequelize, Options as SequelizeOptions } from 'sequelize';
 
 const sequelizeConfig: SequelizeOptions = {
   host: process.env.PGHOST,

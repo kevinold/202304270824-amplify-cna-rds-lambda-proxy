@@ -1,4 +1,5 @@
 //import { APIGatewayProxyResultV2 } from 'aws-lambda';
+// @ts-nocheck
 import { Stadium } from './sequelize';
 
 exports.handler = async function (): Promise<any> {

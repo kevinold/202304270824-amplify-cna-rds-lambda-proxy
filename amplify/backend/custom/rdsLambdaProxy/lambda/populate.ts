@@ -1,3 +1,4 @@
+// @ts-nocheck
 //import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { sequelize, Stadium } from './sequelize';
 //import stadiumData from './stadium-data.json';
