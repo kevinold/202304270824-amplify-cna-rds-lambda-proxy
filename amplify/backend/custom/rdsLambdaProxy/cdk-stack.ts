@@ -1,7 +1,6 @@
 import * as AmplifyHelpers from '@aws-amplify/cli-extensibility-helper';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { AmplifyDependentResourcesAttributes } from '../../types/amplify-dependent-resources-ref';
 //import * as iam from 'aws-cdk-lib/aws-iam';
 //import * as sns from 'aws-cdk-lib/aws-sns';
 //import * as subs from 'aws-cdk-lib/aws-sns-subscriptions';
@@ -78,13 +77,17 @@ export class cdkStack extends cdk.Stack {
     */
 
     // Access other Amplify Resources 
-    const dependencies:AmplifyDependentResourcesAttributes = AmplifyHelpers.addResourceDependency(this, 
-      amplifyResourceProps.category, 
-      amplifyResourceProps.resourceName, 
-      [
-        {category: "function", resourceName: "populateLambda"},
-      ]
-    );
+    // const dependencies:AmplifyDependentResourcesAttributes = AmplifyHelpers.addResourceDependency(this, 
+    //   amplifyResourceProps.category, 
+    //   amplifyResourceProps.resourceName, 
+    //   [
+    //     {category: "function", resourceName: "populateLambda"},
+    //   ]
+    // );
+
+
+    // const populateLambda = lambda.Function.fromFunctionArn(this, "populateLambda", dependencies.function.populateLambda.Arn)
+    // populateLambda.addFunctionUrl()
 
     const vpc = new cdk.aws_ec2.Vpc(this, "RdsProxyExampleVpc", {
       subnetConfiguration: [
@@ -177,6 +180,7 @@ export class cdkStack extends cdk.Stack {
       // Bundler removes these dependencies since they aren't imported explicitly
       // Include them so sequelize can connect to Postgres
       bundling: {
+        //preCompilation: true,
         nodeModules: [ 'pg', 'pg-hstore' ]
       }
     });
@@ -198,6 +202,7 @@ export class cdkStack extends cdk.Stack {
       // Bundler removes these dependencies since they aren't imported explicitly
       // Include them so sequelize can connect to Postgres
       bundling: {
+        //preCompilation: true,
         nodeModules: [ 'pg', 'pg-hstore' ]
       }
     });
